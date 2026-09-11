@@ -19,7 +19,12 @@ builder.Services.AddScoped<IFraudScoringService, RuleBasedFraudScoringService>()
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.ConfigureHttpJsonOptions(o =>
-    o.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+{
+    o.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    // EF navigation properties (Policy <-> Claims) form reference cycles;
+    // IgnoreCycles serializes them as null instead of throwing at depth 64.
+    o.SerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+});
 
 var app = builder.Build();
 
