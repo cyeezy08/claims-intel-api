@@ -1,4 +1,6 @@
 using System.Net.Http.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using ClaimsIntel.Api.Data;
 using ClaimsIntel.Api.Models;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -12,6 +14,12 @@ namespace ClaimsIntel.Tests;
 public class ClaimsApiTests : IClassFixture<WebApplicationFactory<Program>>
 {
     private readonly WebApplicationFactory<Program> _factory;
+
+    // Must mirror the API's JSON options (string enums, camelCase)
+    private static readonly JsonSerializerOptions JsonOpts = new(JsonSerializerDefaults.Web)
+    {
+        Converters = { new JsonStringEnumConverter() }
+    };
 
     public ClaimsApiTests(WebApplicationFactory<Program> factory)
     {
@@ -42,7 +50,7 @@ public class ClaimsApiTests : IClassFixture<WebApplicationFactory<Program>>
         };
         var policyResp = await client.PostAsJsonAsync("/api/policies", policy);
         policyResp.EnsureSuccessStatusCode();
-        var created = await policyResp.Content.ReadFromJsonAsync<Policy>();
+        var created = await policyResp.Content.ReadFromJsonAsync<Policy>(JsonOpts);
         Assert.NotNull(created);
 
         var claimResp = await client.PostAsJsonAsync("/api/claims", new
@@ -54,7 +62,7 @@ public class ClaimsApiTests : IClassFixture<WebApplicationFactory<Program>>
         });
         Assert.Equal(System.Net.HttpStatusCode.Created, claimResp.StatusCode);
 
-        var claim = await claimResp.Content.ReadFromJsonAsync<Claim>();
+        var claim = await claimResp.Content.ReadFromJsonAsync<Claim>(JsonOpts);
         Assert.NotNull(claim);
         Assert.True(claim!.FraudRiskScore >= 60, $"risk {claim.FraudRiskScore}");
         Assert.Equal(ClaimStatus.InReview, claim.Status);
@@ -85,7 +93,7 @@ public class ClaimsApiTests : IClassFixture<WebApplicationFactory<Program>>
             incidentDescription = "clinic visit, receipts attached",
             incidentDate = DateTime.UtcNow.AddDays(-1),
         });
-        var claim = await claimResp.Content.ReadFromJsonAsync<Claim>();
+        var claim = await claimResp.Content.ReadFromJsonAsync<Claim>(JsonOpts);
 
         // Submitted -> Settled is illegal (must be approved first)
         var bad = await client.PatchAsJsonAsync($"/api/claims/{claim!.Id}/status",
