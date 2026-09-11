@@ -1,14 +1,19 @@
 using System.Text.Json.Serialization;
 using ClaimsIntel.Api.Data;
+using ClaimsIntel.Api.Models;
 using ClaimsIntel.Api.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<ClaimsDbContext>(opt =>
-    builder.Configuration.GetConnectionString("Default") is { Length: > 0 } cs
-        ? opt.UseSqlServer(cs)
-        : opt.UseInMemoryDatabase("claims-intel"));
+{
+    var cs = builder.Configuration.GetConnectionString("Default");
+    if (!string.IsNullOrEmpty(cs))
+        opt.UseSqlServer(cs);
+    else
+        opt.UseInMemoryDatabase("claims-intel");
+});
 
 builder.Services.AddScoped<IFraudScoringService, RuleBasedFraudScoringService>();
 builder.Services.AddEndpointsApiExplorer();
@@ -58,8 +63,16 @@ app.MapGet("/api/claims", async (
     int page = 1, int pageSize = 25) =>
 {
     var query = db.Claims.Include(c => c.Policy).AsNoTracking();
-    if (status is not null) query = query.Where(c => c.Status == status);
-    if (minRisk is not null) query = query.Where(c => c.FraudRiskScore >= minRisk);
+    if (status is not null)
+    {
+        var s = status.Value;
+        query = query.Where(c => c.Status == s);
+    }
+    if (minRisk is not null)
+    {
+        var r = minRisk.Value;
+        query = query.Where(c => c.FraudRiskScore >= r);
+    }
     var total = await query.CountAsync();
     var items = await query
         .OrderByDescending(c => c.FraudRiskScore)
@@ -108,7 +121,7 @@ app.MapPost("/api/claims", async (CreateClaimRequest req, ClaimsDbContext db, IF
     return Results.Created($"/api/claims/{claim.Id}", claim);
 }).WithSummary("Submit a claim — runs fraud risk scoring on intake");
 
-app.MapPatch("/api/claims/{id:int}/status", async (int id, UpdateStatusRequest req, ClaimsDbContext db) =>
+app.MapMethods("/api/claims/{id:int}/status", new[] { "PATCH" }, async (int id, UpdateStatusRequest req, ClaimsDbContext db) =>
 {
     var claim = await db.Claims.FindAsync(id);
     if (claim is null) return Results.NotFound(new { error = $"Claim {id} not found" });

@@ -63,9 +63,11 @@ public class FraudScoringServiceTests
     {
         var policy = MakePolicy();
         var recent = DateTime.UtcNow.AddDays(-10);
-        policy.Claims.Add(MakeClaim(2_000m, "Windscreen", DateTime.UtcNow.AddDays(-20)));
-        policy.Claims.Add(MakeClaim(3_000m, "Side mirror", DateTime.UtcNow.AddDays(-15)));
-        var claim = MakeClaim(4_000m, "Another scratch", recent);
+        var c1 = MakeClaim(2_000m, "Windscreen", DateTime.UtcNow.AddDays(-20)); c1.Id = 10;
+        var c2 = MakeClaim(3_000m, "Side mirror", DateTime.UtcNow.AddDays(-15)); c2.Id = 11;
+        var claim = MakeClaim(4_000m, "Another scratch", recent); claim.Id = 12;
+        policy.Claims.Add(c1);
+        policy.Claims.Add(c2);
         policy.Claims.Add(claim);
 
         var result = _svc.Score(claim, policy);
