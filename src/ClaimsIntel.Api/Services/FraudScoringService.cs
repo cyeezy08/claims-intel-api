@@ -1,4 +1,5 @@
 using ClaimsIntel.Api.Data;
+using ClaimsIntel.Api.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace ClaimsIntel.Api.Services;
