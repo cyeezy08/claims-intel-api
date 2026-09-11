@@ -1,8 +1,9 @@
 using System.Net.Http.Json;
-using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.Extensions.DependencyInjection;
-using ClaimsIntel.Api.Models;
 using ClaimsIntel.Api.Data;
+using ClaimsIntel.Api.Models;
+using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
 namespace ClaimsIntel.Tests;

@@ -82,8 +82,8 @@ public class FraudScoringServiceTests
         var policy = MakePolicy(premium: 100m, inception: inception);
         var claim = MakeClaim(10_000_000m, "total loss cash stolen fire no witness lost receipt",
             DateTime.UtcNow);
-        policy.Claims.AddRange(Enumerable.Range(0, 5)
-            .Select(_ => MakeClaim(9_999m, "x", DateTime.UtcNow.AddDays(-2))));
+        for (int i = 0; i < 5; i++)
+            policy.Claims.Add(MakeClaim(9_999m, "x", DateTime.UtcNow.AddDays(-2)));
         policy.Claims.Add(claim);
 
         var result = _svc.Score(claim, policy);
