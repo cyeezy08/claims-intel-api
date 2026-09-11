@@ -13,9 +13,9 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 8.0.x
-      - name: Restore
-        run: dotnet restore
+      - name: Restore (test project transitively restores API)
+        run: dotnet restore tests/ClaimsIntel.Tests
       - name: Build
-        run: dotnet build --no-restore
+        run: dotnet build tests/ClaimsIntel.Tests --no-restore
       - name: Unit + integration tests
-        run: dotnet test --no-build --verbosity normal
+        run: dotnet test tests/ClaimsIntel.Tests --no-build --verbosity normal
